@@ -1,3 +1,4 @@
 Gottfrid Olsson 2022-08-01 14:17 Measurements taken at Doktor Forselius Backe 50, 41326, Gothenburg.
 From 2022-01-06: measurements with PMAS version Beta. with 2mm hole caps (varepsilon < 0.5 deg).
 From 2022-02-23 onwards: measured with PMAS version Beta both ways and took the mean angle.
+From 2022-08-13 onwards: the plumb is no longer a hex-nut but a gifted brass piece from Alfred Wäpling :)
