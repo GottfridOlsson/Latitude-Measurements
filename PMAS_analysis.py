@@ -22,13 +22,13 @@ from scipy.optimize import curve_fit
 ## CONSTANTS ##
 
 CSV_DELIMITER = ','
-CSV_PATH = 'PMAS Latitude Measurements [2022-08-17].csv'
+CSV_PATH = 'PMAS Latitude Measurements [2022-09-17].csv'
 
 LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG = 57.6786 #degree north, Google Maps
 EARTHS_AXIAL_TILT = 23.44; # degrees, https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
 
 START_DATE = "2021-01-01" #first_date: 2021-02-27;  PMAS v. beta from: 2022-01-06;  PMAS v. beta (more accurate?) from: 2022-04-18
-END_DATE   = "2022-08-17"
+END_DATE   = "2022-09-17"
 EXTRA_DAYS_PLOT = 10
 
 EXPORT_DATA_TO_CSV = True
