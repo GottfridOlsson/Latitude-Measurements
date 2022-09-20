@@ -22,13 +22,13 @@ from scipy.optimize import curve_fit
 ## CONSTANTS ##
 
 CSV_DELIMITER = ','
-CSV_PATH = 'PMAS Latitude Measurements [2022-09-17].csv'
+CSV_PATH = 'PMAS Latitude Measurements [2022-09-18].csv'
 
 LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG = 57.6786 #degree north, Google Maps
 EARTHS_AXIAL_TILT = 23.44; # degrees, https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
 
 START_DATE = "2021-01-01" #first_date: 2021-02-27;  PMAS v. beta from: 2022-01-06;  PMAS v. beta (more accurate?) from: 2022-04-18
-END_DATE   = "2022-09-17"
+END_DATE   = "2022-09-20"
 EXTRA_DAYS_PLOT = 10
 
 EXPORT_DATA_TO_CSV = True
@@ -163,7 +163,7 @@ def main():
 
                 dataframe = convert_list_of_lists_and_header_to_DataFrame(data, header)
 
-                export_CSV_file_path = "PMAS_PlotData_from_"+str(START_DATE)+"_to_"+str(END_DATE)+".csv"
+                export_CSV_file_path = "Formatted CSV/PMAS_PlotData_from_"+str(START_DATE)+"_to_"+str(END_DATE)+".csv"
                 write_DataFrame_to_CSV(dataframe, export_CSV_file_path)
 
         # 6. plot fit and data points and fitted curve and compare with theoretical curve 
