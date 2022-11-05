@@ -77,7 +77,7 @@ def cosinus_fit_function(x, a, b, c, d):
         return a + b*np.cos(c*x + d)
 
 def theoretical_correction_curve(day_of_year):
-        return -EARTHS_AXIAL_TILT*np.cos(2*np.pi*(day_of_year+10)/365)
+        return -EARTHS_AXIAL_TILT*np.cos(2*np.pi*(day_of_year+10)/365.25) #testar att div. med 365.25 för att ta hänsyn till skottdag var 4:e år, 2022-11-05. Ser bättre ut!
 
 
 
