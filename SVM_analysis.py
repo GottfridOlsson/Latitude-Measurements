@@ -22,20 +22,20 @@ from scipy.optimize import curve_fit
 ## CONSTANTS ##
 
 CSV_DELIMITER = ','
-CSV_PATH = 'SVM Latitude Measurements [2022-11-05].csv'
+CSV_PATH = 'SVM Latitude Measurements [2022-11-20].csv'
 
 LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG = 57.6786 #degree north, Google Maps
 EARTHS_AXIAL_TILT = 23.44; # degrees, https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
 
 START_DATE = "2021-01-01" #first_date: 2021-02-27;  PMAS v. beta from: 2022-01-06;  PMAS v. beta (more accurate?) from: 2022-04-18
-END_DATE   = "2022-11-05"
+END_DATE   = "2022-11-20"
 EXTRA_DAYS_PLOT = 10
 
 EXPORT_DATA_TO_CSV = True
 UGLY_PLOT = True
 PRINT_FITTED_AND_THEORETICAL_VALUES = True
 
-
+LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR = 365.25
 
 ## FUNCTIONS ##
 
@@ -77,7 +77,7 @@ def cosinus_fit_function(x, a, b, c, d):
         return a + b*np.cos(c*x + d)
 
 def theoretical_correction_curve(day_of_year):
-        return -EARTHS_AXIAL_TILT*np.cos(2*np.pi*(day_of_year+10)/365.25) #testar att div. med 365.25 för att ta hänsyn till skottdag var 4:e år, 2022-11-05. Ser bättre ut!
+        return -EARTHS_AXIAL_TILT*np.cos(2*np.pi*(day_of_year+10)/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR) #testar att div. med 365.25 för att ta hänsyn till skottdag var 4:e år, 2022-11-05. Ser bättre ut!
 
 
 
@@ -139,14 +139,14 @@ def main():
 
 
         # 4. fit cos-curve to measured data
-        initial_parameter_guess = [LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/365, 0] #from knowledge of physics/the theoretical equation
+        initial_parameter_guess = [LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR, 0] #from knowledge of physics/the theoretical equation
         fit_parameters, fit_parameters_covariance = curve_fit(cosinus_fit_function, selected_days_between_unique_dates_and_START_DATE, selected_alpha_naive_min, p0=initial_parameter_guess)
 
         a, b, c, d = fit_parameters[0], fit_parameters[1], fit_parameters[2], fit_parameters[3]
         a, b, c, d = np.array(a), np.array(b), np.array(c), np.array(d) #to make np.cos(*args) stop crying
 
         fitted_curve_values = a + b*np.cos(c*all_days_between_START_and_END_DATE + d)
-        theoretical_curve_values = LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG + EARTHS_AXIAL_TILT*np.cos(2*np.pi*(all_days_between_START_and_END_DATE+np.array(10))/365)
+        theoretical_curve_values = LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG + EARTHS_AXIAL_TILT*np.cos(2*np.pi*(all_days_between_START_and_END_DATE+np.array(10))/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)
         
 
         # 5. export data to CSV (s.t. it can be plotted with PlotData.py)
@@ -159,11 +159,11 @@ def main():
                 uncertainty_pm    = selected_uncertainties
 
                 data   = [all_days, theoretical_curve, fitted_curve, alpha_days, alpha_naive, selected_uncertainties]
-                header = ["All days with start "+str(START_DATE), "theoretical curve (deg)", "fitted curve (deg)", "Days when measured alpha", "alpha naive min (deg)", "uncertainty_pm (deg)"]
+                header = ["All days with start "+str(START_DATE), "theoretical curve (leap day corrected) (deg)", "fitted curve (deg)", "Days when measured alpha", "alpha naive min (deg)", "uncertainty_pm (deg)"]
 
                 dataframe = convert_list_of_lists_and_header_to_DataFrame(data, header)
 
-                export_CSV_file_path = "Formatted CSV/PMAS_PlotData_from_"+str(START_DATE)+"_to_"+str(END_DATE)+".csv"
+                export_CSV_file_path = "Formatted CSV/SVM_PlotData_from_"+str(START_DATE)+"_to_"+str(END_DATE)+".csv"
                 write_DataFrame_to_CSV(dataframe, export_CSV_file_path)
 
         # 6. plot fit and data points and fitted curve and compare with theoretical curve 
@@ -173,9 +173,9 @@ def main():
                 plt.plot(all_days_between_START_and_END_DATE, fitted_curve_values, linestyle="-", color="#0000FF")
 
                 title_fitted = "         Fitted curve: %.2f + %.2f * cos(%.4fx + %.3f)\n" % (a, b, c, d)
-                title_theoretical = "Theoretical curve: %.2f + %.2f * cos(%.4fx + %.3f)" % (LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/365, 2*np.pi*10/365)
+                title_theoretical = "Theoretical curve: %.2f + %.2f * cos(%.4fx + %.3f)" % (LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR, 2*np.pi*10/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)
                 plt.title(title_fitted + title_theoretical)
-                plt.legend(["Datapoints", "Theoretical", "Fitted"])
+                plt.legend(["Datapoints", "Theoretical (leap day corrected)", "Fitted"])
                 plt.show()
 
 
@@ -183,9 +183,9 @@ def main():
         if PRINT_FITTED_AND_THEORETICAL_VALUES:
                 print("\n\t\tLatitude (deg)\tEarths axial tilt (deg)\tCos day coeff.\tCos shift coeff.\n\t   |    ------------------------------------------------------------------------")
                 print("     Fitted|\t%.3f\t\t%.2f\t\t\t%.4f\t\t\t%.4f" % (a,b,c,d))
-                print("Theoretical|\t%.3f\t\t%.2f\t\t\t%.4f\t\t\t%.4f" % (LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/365, 2*np.pi*10/365))
+                print("Theoretical|\t%.3f\t\t%.2f\t\t\t%.4f\t\t\t%.4f" % (LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR, 2*np.pi*10/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR))
                 print("\t   |    ------------------------------------------------------------------------")
-                print(" Rel. error|\t%.2f %%\t\t%.2f %%\t\t\t%.2f %%\t\t\t%.2f %%" % ((a/LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG-1)*100, (b/EARTHS_AXIAL_TILT-1)*100, (c/(2*np.pi/365)-1)*100, (d/(2*np.pi*10/365)-1)*100))
+                print(" Rel. error|\t%.2f %%\t\t%.2f %%\t\t\t%.2f %%\t\t\t%.2f %%" % ((a/LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG-1)*100, (b/EARTHS_AXIAL_TILT-1)*100, (c/(2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)-1)*100, (d/(2*np.pi*10/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)-1)*100))
 
 
 if __name__ == "__main__":
