@@ -19,9 +19,10 @@ def draw_degree_text(theta, radius, string):
     plt.text(theta, radius, string, rotation=rotation_angle_degree, verticalalignment="center", horizontalalignment="center")
 
 
-def draw_radial_line(r_max, r_length, theta, color_string='b', linewidth=1):
+
+def draw_radial_line(r_max, r_length, theta, r_outward_displacement=0, color_string='b', linewidth=1):
     angle = 2*[theta]
-    radial_line = [r_max, r_max-r_length]
+    radial_line = [r_max + r_outward_displacement, r_max + r_outward_displacement - r_length]
     plt.polar(angle, radial_line, color=color_string, linewidth=linewidth)
 
 
@@ -43,7 +44,7 @@ def draw_arc_of_circle(r, x_0=0, y_0=0, theta_start=0, theta_end=2*np.pi, number
         if theta_2[index] < theta_start or theta_2[index] > theta_end:
             theta_2[index] = float("nan")
 
-    plt.polar(theta_1, r_1, 'g-', linewidth=1.5)
+    plt.polar(theta_1, r_1, 'r-', linewidth=1.5)
     plt.polar(theta_2, r_2, 'r-', linewidth=1.5)
 
 
@@ -107,17 +108,23 @@ draw_markings = True
 export_figure = False
 
 R_LIM_MAX = 510
+R_LIM_MIN = 0
 
-R_KUGGHJUL_INNER_RADIUS = 498                 # mm, this needs to be checked! TODO [ ]
-X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = 15 # mm, relative the plump hole center, this needs to be checked! TODO [ ]
-Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = -15 # mm, relative the plump hole center, this needs to be checked! TODO [ ]
+R_KUGGHJUL_INNER_RADIUS = 474                 # mm, //2022-12-08
+X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = 29 # mm, relative the plump hole center //2022-12-08
+Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = -21 # mm, relative the plump hole center //2022-12-08
+
+R_AXISHOLE_CIRCLE_RADIUS_AT_THETA_270_DEGREES = X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER + R_KUGGHJUL_INNER_RADIUS
 
 
-R_MAX = 475             # mm, max radius for angle lines
+R_DISTANCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS= 15 # mm,
+R_MARKINGS_MAX = R_KUGGHJUL_INNER_RADIUS - R_DISTANCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS             # mm, max radius for angle lines
 L_TEN_MARKINGS     = 40 # mm, length of lines for the markings
 L_FIVE_MARKINGS    = 32 # mm, length of lines for the markings
 L_ONE_MARKINGS     = 25 # mm, length of lines for the markings
 L_SUB_ONE_MARKINGS = 12 # mm, length of lines for the markings
+
+R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES = abs(R_AXISHOLE_CIRCLE_RADIUS_AT_THETA_270_DEGREES - R_MARKINGS_MAX)
 
 THETA_START_DEGREE = 180
 THETA_END_DEGREE   = 270  
@@ -138,8 +145,9 @@ if draw_markings:
         theta = degrees_to_radians(THETA_START_DEGREE + angle_number*10)
         r_length = L_TEN_MARKINGS
 
-        draw_radial_line(R_MAX, r_length, theta)
-        draw_degree_text(theta, R_MAX-r_length-TEXT_DISTANCE_FROM_MARKINGS, angle_number*10)
+        r_displacement = R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES*np.cos(theta)
+        draw_radial_line(R_MARKINGS_MAX, r_length, theta, r_outward_displacement = r_displacement)
+        draw_degree_text(theta, R_MARKINGS_MAX-r_length-TEXT_DISTANCE_FROM_MARKINGS+r_displacement, angle_number*10)
 
 
     ## 5 DEGREE LINES ##
@@ -148,8 +156,9 @@ if draw_markings:
         r_length = L_FIVE_MARKINGS
 
         if (angle_number*5 % 10) != 0: #do not draw TEN_MARKINGS lines again
-            draw_radial_line(R_MAX, r_length, theta)
-            draw_degree_text(theta, R_MAX-r_length-TEXT_DISTANCE_FROM_MARKINGS, angle_number*5)
+            r_displacement = R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES*np.cos(theta)
+            draw_radial_line(R_MARKINGS_MAX, r_length, theta, r_outward_displacement = r_displacement)
+            draw_degree_text(theta, R_MARKINGS_MAX-r_length-TEXT_DISTANCE_FROM_MARKINGS+r_displacement, angle_number*5)
 
 
     ## 1 DEGREE LINES ##
@@ -158,7 +167,8 @@ if draw_markings:
         r_length = L_ONE_MARKINGS
 
         if (angle_number % 10) != 0 and (angle_number % 5) != 0: #do not draw TEN_MARKINGS or FIVE_MARKINGS lines again
-            draw_radial_line(R_MAX, r_length, theta)
+            r_displacement = R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES*np.cos(theta)
+            draw_radial_line(R_MARKINGS_MAX, r_length, theta, r_outward_displacement = r_displacement)
 
 
     ## 0.1 DEGREE LINES ##
@@ -167,7 +177,8 @@ if draw_markings:
         r_length = L_SUB_ONE_MARKINGS
 
         if (angle_number % 10) != 0 and (angle_number % 5) != 0:
-            draw_radial_line(R_MAX, r_length, theta)
+            r_displacement = R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES*np.cos(theta)
+            draw_radial_line(R_MARKINGS_MAX, r_length, theta, r_outward_displacement = r_displacement)
 
 
 
@@ -175,6 +186,7 @@ Delta_theta_axis_radius_circle_left = abs(np.arctan(Y_DISPLACEMENT_ROTATION_AXIS
 Delta_theta_axis_radius_circle_down = abs(np.arctan(X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER/R_KUGGHJUL_INNER_RADIUS))
 
 
+# DRAW CIRCLE ARC FOR THE KUGGHJUL_INNER_RADIUS #
 draw_circle(r=3, x_0=0, y_0=0) #plumb hole
 draw_circle(r=18, x_0=X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
                   y_0=Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER)
@@ -184,19 +196,19 @@ draw_arc_of_circle( r=R_KUGGHJUL_INNER_RADIUS,
                     theta_start = np.pi - Delta_theta_axis_radius_circle_left,
                     theta_end = 3*np.pi/2 + Delta_theta_axis_radius_circle_down)
 
-# this works
-
 #TODO: shift the radial lines with (r,theta) --> (x,y), then shift in x,y based on some math i will do, then (x,y) --> (r, theta), plot those
 
-
+#   TODO: DET SER NÄSTAN RÄTT UT MEN DET ÄR DET INTE! (SE SKILLNAD I AVSTÅND MELLAN GRÅ OCH RÖD LINJE FÖR THETA =270 DEG OCH +45 DEG OCH 3*PI/2 RAD)
+#   TODO: HITTA NÅGON TRANSFORM MELLAN DEN GRÅA CIRKELN OCH DEN RÖDA (OLIKA RADIE OCH OLIKA CIRKELCENTRUM)
+#         FÖRSKJUT FRÅN GRÅA TILL RÖDA CIRKEL, SEN FÖRSKJUT ALLA RADIER MED EN KONSTANT OFFSET (AVSTÅND MELLAN KUGGHJULRADIE OCH BÖRJAN AV GRADMARKERINGARNA)
 
 ## SET NICE PLOT PROPERTIES ##
 
 ax=plt.gca()
-ax.set_rticks([R_MAX, 0])
+ax.set_rticks([R_MARKINGS_MAX, 0])
 ax.set_xticks([]) # theta ticks
-#ax.set_thetalim(degrees_to_radians(THETA_START_DEGREE), degrees_to_radians(THETA_END_DEGREE))
-ax.set_rlim(0, R_LIM_MAX)
+ax.set_thetalim(degrees_to_radians(THETA_START_DEGREE), degrees_to_radians(THETA_END_DEGREE))
+ax.set_rlim(R_LIM_MIN, R_LIM_MAX)
 if export_figure:
     matplotlib.pyplot.savefig("SVM_g_protractor_lines.pdf", format='pdf', bbox_inches='tight')
 plt.show()
