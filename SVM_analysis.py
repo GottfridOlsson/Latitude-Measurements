@@ -2,12 +2,16 @@
 ##     Project: SVM analysis
 ##        File: SVM_analysis.py
 ##      Author: GOTTFRID OLSSON 
-##     Created: 2022-08-01, 16:16
-##     Updated: 2022-11-05, 15:54
+##     Created: 2022-08-01
+##     Updated: 2022-12-10
 ##       About: Plot measured data and fitted curve.
 ##====================================================##
 
 
+
+## OBS!
+## a bit unsure of the calculation of d in cos(c*x + d) for the fitted curve when START_DATE > "2021-01-01"
+## //2022-12-10
 
 ## IMPORTS ##
 
@@ -22,13 +26,13 @@ from scipy.optimize import curve_fit
 ## CONSTANTS ##
 
 CSV_DELIMITER = ','
-CSV_PATH = 'SVM Latitude Measurements [2022-11-20].csv'
+CSV_PATH = 'SVM Latitude Measurements [2022-12-10].csv'
 
 LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG = 57.6786 #degree north, Google Maps
 EARTHS_AXIAL_TILT = 23.44; # degrees, https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
 
-START_DATE = "2021-01-01" #first_date: 2021-02-27;  PMAS v. beta from: 2022-01-06;  PMAS v. beta (more accurate?) from: 2022-04-18
-END_DATE   = "2022-11-20"
+START_DATE = "2022-01-01" #first_date: 2021-02-27;  PMAS v. beta from: 2022-01-06;  PMAS v. beta (more accurate?) from: 2022-04-18
+END_DATE   = "2022-12-10"
 EXTRA_DAYS_PLOT = 10
 
 EXPORT_DATA_TO_CSV = True
@@ -102,7 +106,7 @@ def main():
         # 2. select date-range [start_date, end_date] (inclusive) for analysis
 
         unique_dates = get_unique_dates(CSV, START_DATE, END_DATE)
-        
+        start_day_shift = abs(get_days_between_date_and_START_DATE("2021-01-01"))
 
 
         # 3. get naive (!) minimal angle (alpha) for each unique date (IMPROVEMENT: do a cosinus-fit to measured alpha for each date to find a more precise minimal angle)
@@ -120,7 +124,7 @@ def main():
                 alpha_naive_min.append(min(angles_of_date))
                 alpha_naive_actual_min_check.append(0)
                 uncertainty_of_date.append(uncertainties_of_date.iloc[0])
-                days_between_unique_dates_and_START_DATE.append(get_days_between_date_and_START_DATE(date))
+                days_between_unique_dates_and_START_DATE.append(start_day_shift + get_days_between_date_and_START_DATE(date))
 
                 # if measured angle is smaller than previous time and smaller than later time for the same day exists, then naive check is OK = 1
                 for j, alpha in enumerate(angles_of_date):
@@ -131,7 +135,7 @@ def main():
 
         # 3b. only include naive minimal angles which have higher valued angle at later time the same date (otherwise we cannot be sure it is a minima)
         
-        all_days_between_START_and_END_DATE = [x for x in range(0, get_days_between_date_and_START_DATE(END_DATE)+EXTRA_DAYS_PLOT)]
+        all_days_between_START_and_END_DATE = [x for x in range(start_day_shift, start_day_shift+get_days_between_date_and_START_DATE(END_DATE)+EXTRA_DAYS_PLOT)]
         selected_alpha_naive_min = [x for i, x in enumerate(alpha_naive_min) if alpha_naive_actual_min_check[i] == 1]
         selected_days_between_unique_dates_and_START_DATE = [x for i, x in enumerate(days_between_unique_dates_and_START_DATE) if alpha_naive_actual_min_check[i] == 1]
         selected_uncertainties = [x for i, x in enumerate(uncertainty_of_date) if alpha_naive_actual_min_check[i] == 1]
@@ -145,8 +149,8 @@ def main():
         a, b, c, d = fit_parameters[0], fit_parameters[1], fit_parameters[2], fit_parameters[3]
         a, b, c, d = np.array(a), np.array(b), np.array(c), np.array(d) #to make np.cos(*args) stop crying
 
-        fitted_curve_values = a + b*np.cos(c*all_days_between_START_and_END_DATE + d)
-        theoretical_curve_values = LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG + EARTHS_AXIAL_TILT*np.cos(2*np.pi*(all_days_between_START_and_END_DATE+np.array(10))/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)
+        fitted_curve_values = a + b*np.cos(c*(all_days_between_START_and_END_DATE) + d)
+        theoretical_curve_values = LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG + EARTHS_AXIAL_TILT*np.cos(2*np.pi*(all_days_between_START_and_END_DATE + np.array(10))/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)
         
 
         # 5. export data to CSV (s.t. it can be plotted with PlotData.py)
