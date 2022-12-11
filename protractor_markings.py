@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+
+
+
 ## FUNCTIONS ##
 
 def draw_degree_text(theta, radius, string):
@@ -94,6 +97,9 @@ def radians_to_degrees(radians):
 
 
 
+
+
+
 matplotlib.rcParams.update({
     "text.usetex": False,
     "font.family": "serif", 
@@ -103,9 +109,17 @@ plt.figure(figsize=(10,10)) #15,15
 plt.axes(projection = 'polar')
 
 
+
+
+
+
+
 ## DEFINE VARIABLES ##
 draw_markings = True
+draw_old_markings = False
 export_figure = False
+export_figure_as_test = True
+
 
 R_LIM_MAX = 510
 R_LIM_MIN = 0
@@ -115,7 +129,6 @@ X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = 29 # mm, relative the plump hole cent
 Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = -21 # mm, relative the plump hole center //2022-12-08
 
 R_AXISHOLE_CIRCLE_RADIUS_AT_THETA_270_DEGREES = X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER + R_KUGGHJUL_INNER_RADIUS
-
 
 R_DISTANCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS= 15 # mm,
 R_MARKINGS_MAX = R_KUGGHJUL_INNER_RADIUS - R_DISTANCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS             # mm, max radius for angle lines
@@ -134,51 +147,47 @@ NUMBER_OF_FIVE_MARKINGS     = 10 - 1 + NUMBER_OF_TEN_MARKINGS
 NUMBER_OF_ONE_MARKINGS      = 90
 NUMBER_OF_SUB_ONE_MARKINGS  = 4 * 90 + NUMBER_OF_ONE_MARKINGS #think: 9 between each whole degree, but draw 4 with lines and use the 5 spaces between lines as implicit markings
 
+NUMBER_OF_MARKINGS = 90 + 4*90 # 90 whole numbers, 4 markings between each of the whole markings (draw only each line with 0.2 deg separation)
+ANGLE_SEPARATION_DEGFREE = 0.2
+NUMBER_OF_SUB_ONE_MARKINGS_PER_MARKING = 1/ANGLE_SEPARATION_DEGFREE # = 5
+
 TEXT_DISTANCE_FROM_MARKINGS = 5
+
+
 
 
 ## SVM gamma PROTRACTOR LINES ##
 
 if draw_markings:
-    ## 10 DEGREE LINES ##
-    for angle_number in range(NUMBER_OF_TEN_MARKINGS):
-        theta = degrees_to_radians(THETA_START_DEGREE + angle_number*10)
-        r_length = L_TEN_MARKINGS
+    for n_marking in range(NUMBER_OF_MARKINGS+1):
+                theta = degrees_to_radians(THETA_START_DEGREE + n_marking*ANGLE_SEPARATION_DEGFREE)
 
-        r_displacement = R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES*np.cos(theta)
-        draw_radial_line(R_MARKINGS_MAX, r_length, theta, r_outward_displacement = r_displacement)
-        draw_degree_text(theta, R_MARKINGS_MAX-r_length-TEXT_DISTANCE_FROM_MARKINGS+r_displacement, angle_number*10)
+                # function choosing r_length and angle_text
+                r_length = 0
+                plot_text = False
+                if   (n_marking % (10*NUMBER_OF_SUB_ONE_MARKINGS_PER_MARKING)) == 0:
+                            r_length = L_TEN_MARKINGS
+                            plot_text = True
+                            angle_text = int( (n_marking / (10*NUMBER_OF_SUB_ONE_MARKINGS_PER_MARKING))*10 )
 
+                elif (n_marking %  (5*NUMBER_OF_SUB_ONE_MARKINGS_PER_MARKING)) == 0:
+                            r_length = L_FIVE_MARKINGS
+                            plot_text = True
+                            angle_text = int( (n_marking / (5*NUMBER_OF_SUB_ONE_MARKINGS_PER_MARKING))*5 )
 
-    ## 5 DEGREE LINES ##
-    for angle_number in range(NUMBER_OF_FIVE_MARKINGS):
-        theta = degrees_to_radians(THETA_START_DEGREE + angle_number*5)
-        r_length = L_FIVE_MARKINGS
+                elif (n_marking %  (1*NUMBER_OF_SUB_ONE_MARKINGS_PER_MARKING)) == 0:
+                            r_length = L_ONE_MARKINGS
 
-        if (angle_number*5 % 10) != 0: #do not draw TEN_MARKINGS lines again
-            r_displacement = R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES*np.cos(theta)
-            draw_radial_line(R_MARKINGS_MAX, r_length, theta, r_outward_displacement = r_displacement)
-            draw_degree_text(theta, R_MARKINGS_MAX-r_length-TEXT_DISTANCE_FROM_MARKINGS+r_displacement, angle_number*5)
+                else:                                  
+                    r_length = L_SUB_ONE_MARKINGS
+                
 
+                #r_displacement = R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES*np.cos(theta)
+                r_displacement = 0
+                draw_radial_line(R_MARKINGS_MAX, r_length, theta, r_outward_displacement = r_displacement, color_string="g")
+                if plot_text:
+                    draw_degree_text(theta, R_MARKINGS_MAX-r_length-TEXT_DISTANCE_FROM_MARKINGS+r_displacement, angle_text)
 
-    ## 1 DEGREE LINES ##
-    for angle_number in range(NUMBER_OF_ONE_MARKINGS):
-        theta = degrees_to_radians(THETA_START_DEGREE + angle_number*1)
-        r_length = L_ONE_MARKINGS
-
-        if (angle_number % 10) != 0 and (angle_number % 5) != 0: #do not draw TEN_MARKINGS or FIVE_MARKINGS lines again
-            r_displacement = R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES*np.cos(theta)
-            draw_radial_line(R_MARKINGS_MAX, r_length, theta, r_outward_displacement = r_displacement)
-
-
-    ## 0.1 DEGREE LINES ##
-    for angle_number in range(NUMBER_OF_SUB_ONE_MARKINGS):
-        theta = degrees_to_radians(THETA_START_DEGREE + angle_number*0.2)
-        r_length = L_SUB_ONE_MARKINGS
-
-        if (angle_number % 10) != 0 and (angle_number % 5) != 0:
-            r_displacement = R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES*np.cos(theta)
-            draw_radial_line(R_MARKINGS_MAX, r_length, theta, r_outward_displacement = r_displacement)
 
 
 
@@ -211,4 +220,6 @@ ax.set_thetalim(degrees_to_radians(THETA_START_DEGREE), degrees_to_radians(THETA
 ax.set_rlim(R_LIM_MIN, R_LIM_MAX)
 if export_figure:
     matplotlib.pyplot.savefig("SVM_g_protractor_lines.pdf", format='pdf', bbox_inches='tight')
+elif export_figure_as_test:
+    matplotlib.pyplot.savefig("SVM_g_protractor_lines_TEST.pdf", format='pdf', bbox_inches='tight')      
 plt.show()
