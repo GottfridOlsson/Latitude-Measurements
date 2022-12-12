@@ -11,7 +11,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-
+from datetime import datetime
 
 
 
@@ -330,6 +330,8 @@ if draw_markings:
                 if plot_text:
                     draw_degree_text(theta, r_distance_origin_to_kugghjul_circle-R_DISTANCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS-r_length-TEXT_DISTANCE_FROM_MARKINGS, angle_text)
 
+    todays_date_string = datetime.now().strftime("%Y-%m-%d")
+    plt.text(degrees_to_radians(180+45), R_KUGGHJUL_INNER_RADIUS/2, f"Gottfrid Olsson\n{todays_date_string}", rotation=0, verticalalignment="center", horizontalalignment="center")
 
 
 
@@ -343,7 +345,7 @@ ax.set_rlim(R_LIM_MIN, R_LIM_MAX)
 
 
 if export_figure:
-    matplotlib.pyplot.savefig("SVM_g_protractor_lines.pdf", format='pdf', bbox_inches='tight')
+    matplotlib.pyplot.savefig(f"SVM_g_protractor_lines_{todays_date_string}.pdf", format='pdf', bbox_inches='tight')
 elif export_figure_as_test:
     matplotlib.pyplot.savefig("SVM_g_protractor_lines_TEST.pdf", format='pdf', bbox_inches='tight')      
 plt.show()
