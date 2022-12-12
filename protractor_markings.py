@@ -3,14 +3,14 @@
 ##        File: protractor_markings.py
 ##      Author: GOTTFRID OLSSON 
 ##     Created: 2022-12-02
-##     Updated: 2022-12-06
+##     Updated: 2022-12-12
 ##       About: Plot data in a polar plot.
 ##====================================================##
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-
+import math
 
 
 
@@ -21,13 +21,10 @@ def draw_degree_text(theta, radius, string):
     rotation_angle_degree = radians_to_degrees(theta) + 90
     plt.text(theta, radius, string, rotation=rotation_angle_degree, verticalalignment="center", horizontalalignment="center")
 
-
-
 def draw_radial_line(r_max, r_length, theta, r_outward_displacement=0, color_string='b', linewidth=1):
     angle = 2*[theta]
     radial_line = [r_max + r_outward_displacement, r_max + r_outward_displacement - r_length]
     plt.polar(angle, radial_line, color=color_string, linewidth=linewidth)
-
 
 def draw_arc_of_circle(r, x_0=0, y_0=0, theta_start=0, theta_end=2*np.pi, number_of_points = 360*4):
     x_linspace = np.linspace(x_0 - r, x_0 + r, number_of_points, endpoint=True)
@@ -50,7 +47,6 @@ def draw_arc_of_circle(r, x_0=0, y_0=0, theta_start=0, theta_end=2*np.pi, number
     plt.polar(theta_1, r_1, 'r-', linewidth=1.5)
     plt.polar(theta_2, r_2, 'r-', linewidth=1.5)
 
-
 def draw_circle(r, x_0=0, y_0=0, number_of_points=360*2):
     x_linspace = np.linspace(x_0 - r, x_0 + r, number_of_points, endpoint=True)
 
@@ -63,14 +59,11 @@ def draw_circle(r, x_0=0, y_0=0, number_of_points=360*2):
     plt.polar(theta_1, r_1, 'k-')
     plt.polar(theta_2, r_2, 'k-')
 
-
-
 def polar_to_cartesian(r, theta):
     x = r*np.cos(theta)
     y = r*np.sin(theta)
 
     return (x, y)
-
 
 def certesian_to_polar(x, y):
     # https://en.wikipedia.org/wiki/Polar_coordinate_system
@@ -87,21 +80,126 @@ def certesian_to_polar(x, y):
     
     return (r, theta)
 
-
 def degrees_to_radians(degree):
     return degree*(np.pi/180)
-
 
 def radians_to_degrees(radians):
     return radians*(180/np.pi)
 
+def get_radial_distance_from_point_to_cricle_at_origin_at_angle(circle_radius, x_coordination_point, y_coordination_point, angle_radians):
+    r_0 = circle_radius
+    a, b = x_coordination_point, y_coordination_point
+    alpha = angle_radians
+    
+    k = get_directional_coefficient_for_line_from_angle(alpha)
+
+    # SOLVE SYSTEM OF EQUATION FOR CIRCLE AND LINE THROUGH POINT # (done on paper)
+    x_plus, x_minus = get_x_roots_line_intersecting_circle_problem(r_0, a, b, k)
+    y_plus, y_minus = get_y_roots_line_intersecting_circle_problem(r_0, a, b, k)
+
+    x_intersect, y_intersect = None, None
+
+    # PICK RIGHT ROOTS BASED ON ANGLE # (verified in Desmos)
+    if math.isclose(alpha, 0, rel_tol=1e-6) or math.isclose(alpha, 2*np.pi, rel_tol=1e-6):
+        x_intersect = x_plus
+        y_intersect = b
+    
+    if 0 < alpha < np.pi/2:
+        x_intersect = x_plus
+        y_intersect = y_plus
+
+    if math.isclose(alpha, np.pi/2, rel_tol=1e-6):
+        x_intersect = a
+        y_intersect = y_plus 
+
+    if np.pi/2 < alpha < np.pi:
+        x_intersect = x_minus
+        y_intersect = y_plus
+    
+    if math.isclose(alpha, np.pi, rel_tol=1e-6):
+        x_intersect = x_minus
+        y_intersect = b
+
+    if np.pi < alpha < 3*np.pi/2:
+        x_intersect = x_minus
+        y_intersect = y_minus
+    
+    if math.isclose(alpha, 3*np.pi/2, rel_tol=1e-6):
+        x_intersect = a
+        y_intersect = y_minus
+
+    if 3*np.pi/2 < alpha < 2*np.pi:
+        x_intersect = x_plus
+        y_intersect = y_minus
+
+    radial_distance = get_distance_between_two_points(a, b, x_intersect, y_intersect)
+
+    return radial_distance
+
+def get_directional_coefficient_for_line_from_angle(angle_radians):
+    alpha = angle_radians
+
+    if abs(alpha) > 2*np.pi:
+        print(f"ERROR: angle |{alpha}| > 2*pi. Make the angle lie within the range [0, 2*pi] to use this function")
+        pass
+
+    if 0 <= alpha < np.pi or math.isclose(alpha, 2*np.pi, rel_tol=1e-6):
+        return np.tan(alpha)
+
+    if np.pi <= alpha < 3*np.pi/2:
+        return np.tan(alpha-np.pi)
+
+    if math.isclose(alpha, 3*np.pi/2, rel_tol=1e-6):
+        return 10**20 # "infty"
+    
+    if 3*np.pi/2 < alpha < 2*np.pi:
+        return np.tan(alpha - np.pi)
+    
+    print(f"Angle {alpha} radians were not caught by the cases implemented in get_directional_coefficient_for_line_from_angle")
+
+def get_x_roots_line_intersecting_circle_problem(circle_radius, x_coordination_point, y_coordination_point, directional_coefficient_line):
+    r_0 = circle_radius
+    a = x_coordination_point
+    b = y_coordination_point
+    k = directional_coefficient_line
+
+    #define terms in solution to quadratic equation
+    alpha = k**2 + 1
+    beta = r_0**2 - (b-k*a)**2
+    gamma = k*(b-k*a)
+
+    x_plus  = -gamma/alpha + np.sqrt( beta/alpha + gamma**2/alpha**2 )
+    x_minus = -gamma/alpha - np.sqrt( beta/alpha + gamma**2/alpha**2 )
+
+    return x_plus, x_minus
+    
+def get_y_roots_line_intersecting_circle_problem(circle_radius, x_coordination_point, y_coordination_point, directional_coefficient_line):
+    r_0 = circle_radius
+    a = x_coordination_point
+    b = y_coordination_point
+    k = directional_coefficient_line
 
 
+    #define terms in solution to quadratic equation
+    if k != 0:
+        c = 1/k
+    else:
+        c = 10**20 #"infty"
 
+    alpha = c**2 + 1
+    beta = r_0**2 - (a-b*c)**2
+    gamma = c*(a-b*c)
 
+    y_plus  = -gamma/alpha + np.sqrt( beta/alpha + gamma**2/alpha**2 )
+    y_minus = -gamma/alpha - np.sqrt( beta/alpha + gamma**2/alpha**2 )
+
+    return y_plus, y_minus
+
+def get_distance_between_two_points(a, b, c, d):
+    return np.sqrt( (a-c)**2 + (b-d)**2 )
 
 matplotlib.rcParams.update({
-    "text.usetex": False,
+    "text.usetex": True,
     "font.family": "serif", 
     "font.serif" : ["Computer Modern Roman"]
     })
@@ -116,9 +214,8 @@ plt.axes(projection = 'polar')
 
 ## DEFINE VARIABLES ##
 draw_markings = True
-draw_old_markings = False
-export_figure = False
-export_figure_as_test = True
+export_figure = True
+export_figure_as_test = False
 
 
 R_LIM_MAX = 510
@@ -130,7 +227,7 @@ Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = -21 # mm, relative the plump hole cen
 
 R_AXISHOLE_CIRCLE_RADIUS_AT_THETA_270_DEGREES = X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER + R_KUGGHJUL_INNER_RADIUS
 
-R_DISTANCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS= 15 # mm,
+R_DISTANCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS= 25 # mm,
 R_MARKINGS_MAX = R_KUGGHJUL_INNER_RADIUS - R_DISTANCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS             # mm, max radius for angle lines
 L_TEN_MARKINGS     = 40 # mm, length of lines for the markings
 L_FIVE_MARKINGS    = 32 # mm, length of lines for the markings
@@ -148,8 +245,8 @@ NUMBER_OF_ONE_MARKINGS      = 90
 NUMBER_OF_SUB_ONE_MARKINGS  = 4 * 90 + NUMBER_OF_ONE_MARKINGS #think: 9 between each whole degree, but draw 4 with lines and use the 5 spaces between lines as implicit markings
 
 NUMBER_OF_MARKINGS = 90 + 4*90 # 90 whole numbers, 4 markings between each of the whole markings (draw only each line with 0.2 deg separation)
-ANGLE_SEPARATION_DEGFREE = 0.2
-NUMBER_OF_SUB_ONE_MARKINGS_PER_MARKING = 1/ANGLE_SEPARATION_DEGFREE # = 5
+ANGLE_SEPARATION_DEGREE = 0.2
+NUMBER_OF_SUB_ONE_MARKINGS_PER_MARKING = 1/ANGLE_SEPARATION_DEGREE # = 5
 
 TEXT_DISTANCE_FROM_MARKINGS = 5
 
@@ -158,9 +255,56 @@ TEXT_DISTANCE_FROM_MARKINGS = 5
 
 ## SVM gamma PROTRACTOR LINES ##
 
+# PREPARATION #
+
+Delta_theta_axis_radius_circle_left = abs(np.arctan(Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER/R_KUGGHJUL_INNER_RADIUS))
+Delta_theta_axis_radius_circle_down = abs(np.arctan(X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER/R_KUGGHJUL_INNER_RADIUS))
+
+
+# DRAW CIRCLE ARC FOR THE KUGGHJUL_INNER_RADIUS #
+draw_circle(r=3, x_0=0, y_0=0) #plumb hole
+draw_circle(r=18, x_0=X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
+                  y_0=Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER)
+draw_arc_of_circle( r=R_KUGGHJUL_INNER_RADIUS,
+                    x_0=X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
+                    y_0=Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
+                    theta_start = np.pi - Delta_theta_axis_radius_circle_left,
+                    theta_end = 3*np.pi/2 + Delta_theta_axis_radius_circle_down)
+
+
+radial_distance_from_origin_to_circle_for_gear = []
+angles_radians_third_quadrant_step_one_degree = degrees_to_radians( np.linspace(180, 270, 270-180+1) )
+
+for i in range(len(angles_radians_third_quadrant_step_one_degree)):
+            radial_distance_from_origin_to_circle_for_gear.append(
+
+                #why negative X and Y displacement below?
+                # since the calculation in "get_radial_distance_from_point_to_cricle_at_origin_at_angle" is for a circle at (0,0) and a point at (a,b)
+                # a coordinate shift is needed to make the origin at (-a,-b) such that the point is at (0,0)
+                get_radial_distance_from_point_to_cricle_at_origin_at_angle(
+                    R_KUGGHJUL_INNER_RADIUS,
+                    -X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
+                    -Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
+                    angles_radians_third_quadrant_step_one_degree[i]))
+            #test:
+            #draw_radial_line(radial_distance_from_origin_to_circle_for_gear[i], radial_distance_from_origin_to_circle_for_gear[i], angles_radians_third_quadrant_step_one_degree[i])
+
+
+
+# DRAW PROTRACTOR LINES ##
+
 if draw_markings:
     for n_marking in range(NUMBER_OF_MARKINGS+1):
-                theta = degrees_to_radians(THETA_START_DEGREE + n_marking*ANGLE_SEPARATION_DEGFREE)
+                theta = degrees_to_radians(THETA_START_DEGREE + n_marking*ANGLE_SEPARATION_DEGREE)
+                r_distance_origin_to_kugghjul_circle = get_radial_distance_from_point_to_cricle_at_origin_at_angle(
+                    R_KUGGHJUL_INNER_RADIUS,
+                    -X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
+                    -Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
+                    theta
+                    #why negative X and Y displacement above?
+                    # since the calculation in "get_radial_distance_from_point_to_cricle_at_origin_at_angle" is for a circle at (0,0) and a point at (a,b)
+                    # a coordinate shift is needed to make the origin at (-a,-b) such that the point is at (0,0)    
+                )
 
                 # function choosing r_length and angle_text
                 r_length = 0
@@ -182,34 +326,12 @@ if draw_markings:
                     r_length = L_SUB_ONE_MARKINGS
                 
 
-                #r_displacement = R_DIFFERENCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS_RADIUS_AT_THETA_270_DEGREES*np.cos(theta)
-                r_displacement = 0
-                draw_radial_line(R_MARKINGS_MAX, r_length, theta, r_outward_displacement = r_displacement, color_string="g")
+                draw_radial_line(r_distance_origin_to_kugghjul_circle-R_DISTANCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS, r_length, theta, color_string="g")
                 if plot_text:
-                    draw_degree_text(theta, R_MARKINGS_MAX-r_length-TEXT_DISTANCE_FROM_MARKINGS+r_displacement, angle_text)
+                    draw_degree_text(theta, r_distance_origin_to_kugghjul_circle-R_DISTANCE_BETWEEN_KUGGHJUL_RADIUS_AND_MARKINGS-r_length-TEXT_DISTANCE_FROM_MARKINGS, angle_text)
 
 
 
-
-Delta_theta_axis_radius_circle_left = abs(np.arctan(Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER/R_KUGGHJUL_INNER_RADIUS))
-Delta_theta_axis_radius_circle_down = abs(np.arctan(X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER/R_KUGGHJUL_INNER_RADIUS))
-
-
-# DRAW CIRCLE ARC FOR THE KUGGHJUL_INNER_RADIUS #
-draw_circle(r=3, x_0=0, y_0=0) #plumb hole
-draw_circle(r=18, x_0=X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
-                  y_0=Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER)
-draw_arc_of_circle( r=R_KUGGHJUL_INNER_RADIUS,
-                    x_0=X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
-                    y_0=Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
-                    theta_start = np.pi - Delta_theta_axis_radius_circle_left,
-                    theta_end = 3*np.pi/2 + Delta_theta_axis_radius_circle_down)
-
-#TODO: shift the radial lines with (r,theta) --> (x,y), then shift in x,y based on some math i will do, then (x,y) --> (r, theta), plot those
-
-#   TODO: DET SER NÄSTAN RÄTT UT MEN DET ÄR DET INTE! (SE SKILLNAD I AVSTÅND MELLAN GRÅ OCH RÖD LINJE FÖR THETA =270 DEG OCH +45 DEG OCH 3*PI/2 RAD)
-#   TODO: HITTA NÅGON TRANSFORM MELLAN DEN GRÅA CIRKELN OCH DEN RÖDA (OLIKA RADIE OCH OLIKA CIRKELCENTRUM)
-#         FÖRSKJUT FRÅN GRÅA TILL RÖDA CIRKEL, SEN FÖRSKJUT ALLA RADIER MED EN KONSTANT OFFSET (AVSTÅND MELLAN KUGGHJULRADIE OCH BÖRJAN AV GRADMARKERINGARNA)
 
 ## SET NICE PLOT PROPERTIES ##
 
@@ -218,6 +340,8 @@ ax.set_rticks([R_MARKINGS_MAX, 0])
 ax.set_xticks([]) # theta ticks
 ax.set_thetalim(degrees_to_radians(THETA_START_DEGREE), degrees_to_radians(THETA_END_DEGREE))
 ax.set_rlim(R_LIM_MIN, R_LIM_MAX)
+
+
 if export_figure:
     matplotlib.pyplot.savefig("SVM_g_protractor_lines.pdf", format='pdf', bbox_inches='tight')
 elif export_figure_as_test:
