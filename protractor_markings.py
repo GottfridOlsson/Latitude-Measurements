@@ -218,12 +218,12 @@ export_figure = True
 export_figure_as_test = False
 
 
-R_LIM_MAX = 510
+R_LIM_MAX = 500
 R_LIM_MIN = 0
 
-R_KUGGHJUL_INNER_RADIUS = 474                 # mm, //2022-12-08
-X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = 29 # mm, relative the plump hole center //2022-12-08
-Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = -21 # mm, relative the plump hole center //2022-12-08
+R_KUGGHJUL_INNER_RADIUS = 479.5                 # mm, //2022-12-13
+X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = 12   # mm, relative the plump hole center //2022-12-13
+Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER = -12  # mm, relative the plump hole center //2022-12-13
 
 R_AXISHOLE_CIRCLE_RADIUS_AT_THETA_270_DEGREES = X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER + R_KUGGHJUL_INNER_RADIUS
 
@@ -263,7 +263,7 @@ Delta_theta_axis_radius_circle_down = abs(np.arctan(X_DISPLACEMENT_ROTATION_AXIS
 
 # DRAW CIRCLE ARC FOR THE KUGGHJUL_INNER_RADIUS #
 draw_circle(r=3, x_0=0, y_0=0) #plumb hole
-draw_circle(r=18, x_0=X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
+draw_circle(r=18.5/2, x_0=X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
                   y_0=Y_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER)
 draw_arc_of_circle( r=R_KUGGHJUL_INNER_RADIUS,
                     x_0=X_DISPLACEMENT_ROTATION_AXIS_HOLE_CENTER,
@@ -338,14 +338,14 @@ if draw_markings:
 ## SET NICE PLOT PROPERTIES ##
 
 ax=plt.gca()
-ax.set_rticks([R_MARKINGS_MAX, 0])
+ax.set_rticks([R_LIM_MAX, 0])
 ax.set_xticks([]) # theta ticks
 ax.set_thetalim(degrees_to_radians(THETA_START_DEGREE), degrees_to_radians(THETA_END_DEGREE))
 ax.set_rlim(R_LIM_MIN, R_LIM_MAX)
 
 
 if export_figure:
-    matplotlib.pyplot.savefig(f"SVM_g_protractor_lines_{todays_date_string}.pdf", format='pdf', bbox_inches='tight')
+    matplotlib.pyplot.savefig(f"PDF protractor lines/SVM_g_protractor_lines_{todays_date_string}.pdf", format='pdf', bbox_inches='tight')
 elif export_figure_as_test:
     matplotlib.pyplot.savefig("SVM_g_protractor_lines_TEST.pdf", format='pdf', bbox_inches='tight')      
 plt.show()
