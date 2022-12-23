@@ -39,7 +39,7 @@ EXPORT_DATA_TO_CSV = True
 UGLY_PLOT = True
 PRINT_FITTED_AND_THEORETICAL_VALUES = True
 
-LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR = 365.25
+LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR = 365.25636 #sidereal year, number of days for the Earth to do one rotation around the sun
 
 ## FUNCTIONS ##
 
@@ -84,7 +84,11 @@ def theoretical_correction_curve(day_of_year):
         return -EARTHS_AXIAL_TILT*np.cos(2*np.pi*(day_of_year+10)/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR) #testar att div. med 365.25 för att ta hänsyn till skottdag var 4:e år, 2022-11-05. Ser bättre ut!
 
 
+def better_theoretical_correction_curve(day_of_year):
+        a = np.sin(-EARTHS_AXIAL_TILT*np.pi/180)
+        b = np.cos( (2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)*(day_of_year + 10.0) + (2*np.pi/np.pi)*0.0167*np.sin( (2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)*(day_of_year - 2)) )
 
+        return -np.arcsin(a*b)*180/np.pi #convert to degrees
 
 
 
@@ -151,7 +155,11 @@ def main():
 
         fitted_curve_values = a + b*np.cos(c*(all_days_between_START_and_END_DATE) + d)
         theoretical_curve_values = LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG + EARTHS_AXIAL_TILT*np.cos(2*np.pi*(all_days_between_START_and_END_DATE + np.array(10))/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)
-        
+        #better_theoretical_correction_curve_values = better_theoretical_correction_curve(all_days_between_START_and_END_DATE)
+        better_theoretical_correction_curve_values = []
+        for day, idex in enumerate(all_days_between_START_and_END_DATE):
+
+                better_theoretical_correction_curve_values.append(LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG + better_theoretical_correction_curve(day))
 
         # 5. export data to CSV (s.t. it can be plotted with PlotData.py)
         if EXPORT_DATA_TO_CSV:
@@ -173,13 +181,17 @@ def main():
         # 6. plot fit and data points and fitted curve and compare with theoretical curve 
         if UGLY_PLOT:
                 plt.plot(selected_days_between_unique_dates_and_START_DATE, selected_alpha_naive_min, markersize=5, marker="x", linewidth=0, color="#FF0000")
-                plt.plot(all_days_between_START_and_END_DATE, theoretical_curve_values, linestyle="--", color="#000000")
+                plt.plot(all_days_between_START_and_END_DATE, theoretical_curve_values, linestyle=":", color="#000000")
+                plt.plot(all_days_between_START_and_END_DATE, better_theoretical_correction_curve_values, linestyle='--', color="#000000")
                 plt.plot(all_days_between_START_and_END_DATE, fitted_curve_values, linestyle="-", color="#0000FF")
 
-                title_fitted = "         Fitted curve: %.2f + %.2f * cos(%.4fx + %.3f)\n" % (a, b, c, d)
-                title_theoretical = "Theoretical curve: %.2f + %.2f * cos(%.4fx + %.3f)" % (LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR, 2*np.pi*10/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)
-                plt.title(title_fitted + title_theoretical)
-                plt.legend(["Datapoints", "Theoretical (leap day corrected)", "Fitted"])
+                title_fitted             = "            Fitted curve: %.2f + %.2f cos(%.4fx + %.3f)\n" % (a, b, c, d)
+                title_simple_theoretical = "Simple theoretical curve: %.2f + %.2f cos(%.4fx + %.3f)\n" % (LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR, 2*np.pi*10/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)
+                title_theoretical        = "Better theoretical curve: Its complicated"
+                
+                plt.title(title_fitted + title_simple_theoretical + title_theoretical)
+                plt.legend(["Datapoints", "Simple theoretical (leap day corrected)", "Better theoretical (leap day corrected)", "Fitted"])
+                plt.tight_layout()
                 plt.show()
 
 
