@@ -3,7 +3,7 @@
 ##        File: SVM_analysis.py
 ##      Author: GOTTFRID OLSSON 
 ##     Created: 2022-08-01
-##     Updated: 2022-12-10
+##     Updated: 2022-12-23
 ##       About: Plot measured data and fitted curve.
 ##====================================================##
 
@@ -145,6 +145,31 @@ def main():
         selected_uncertainties = [x for i, x in enumerate(uncertainty_of_date) if alpha_naive_actual_min_check[i] == 1]
 
 
+        # 3c. calculate max and min, mean from selected alphas (to compare and see that you do not need to fit function to get latitude nor Earth's axial tilt)
+        maximum_alpha_from_data = np.max(selected_alpha_naive_min)
+        minimum_alpha_from_data = np.min(selected_alpha_naive_min)
+        #THE UNCERTAINTY SHOULD NOT BE CALCULATED LIKE THIS, BUT I CANNOT BE BOTHERED TO FIX THIS RIGHT NOW     //2022-12-23, 23:59
+        uncertainty_maximum_alpha_from_data = selected_uncertainties[0] #np.where(maximum_alpha_from_data == selected_alpha_naive_min, selected_uncertainties)
+        uncertainty_minimum_alpha_from_data = selected_uncertainties[0]#np.where(maximum_alpha_from_data == selected_alpha_naive_min, selected_uncertainties)
+        mean_alpha_equals_latitude = (maximum_alpha_from_data + minimum_alpha_from_data) /2.0
+        uncertainty_mean_alpha_equals_latitude = (uncertainty_maximum_alpha_from_data + uncertainty_minimum_alpha_from_data )/2.0
+        earths_tilt_from_max = maximum_alpha_from_data - mean_alpha_equals_latitude
+        uncertainty_earths_tilt_from_max = uncertainty_maximum_alpha_from_data + uncertainty_mean_alpha_equals_latitude
+        earths_tilt_from_min = mean_alpha_equals_latitude - minimum_alpha_from_data
+        uncertainty_earths_tilt_from_min = uncertainty_minimum_alpha_from_data + uncertainty_mean_alpha_equals_latitude
+        #earths tilt from max and min are the same based on how the mean is calculated
+
+        print("\nFrom max and min of measured angles (degree) we get")
+        print(f"Maximum:                {maximum_alpha_from_data} +- {uncertainty_maximum_alpha_from_data}")
+        print(f"Minimum:                {minimum_alpha_from_data} +- {uncertainty_minimum_alpha_from_data}")
+        print(f"Latitude (mean):        {mean_alpha_equals_latitude} +- {uncertainty_mean_alpha_equals_latitude}")
+        print(f"Earth's tilt:           {earths_tilt_from_max} +- {uncertainty_earths_tilt_from_max}\n")
+        print("Compare with theoretical (degree)")
+        print(f"Maximum:                 {LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG + EARTHS_AXIAL_TILT:.3f}")
+        print(f"Minimum:                 {LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG - EARTHS_AXIAL_TILT:.3f}")
+        print(f"Latitude:                {LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG:.3f}")
+        print(f"Earth's tilt:            {EARTHS_AXIAL_TILT}\n")
+        
 
         # 4. fit cos-curve to measured data
         initial_parameter_guess = [LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR, 0] #from knowledge of physics/the theoretical equation
