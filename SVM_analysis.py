@@ -32,14 +32,14 @@ LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG = 57.6786 #degree north, Google Maps
 EARTHS_AXIAL_TILT = 23.44; # degrees, https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
 
 START_DATE = "2022-01-01" #first_date: 2021-02-27;  PMAS v. beta from: 2022-01-06;  PMAS v. beta (more accurate?) from: 2022-04-18
-END_DATE   = "2022-12-30"
-EXTRA_DAYS_PLOT = 10
+END_DATE   = "2022-12-31"
+EXTRA_DAYS_PLOT = 0
 
 EXPORT_DATA_TO_CSV = True
 UGLY_PLOT = True
 PRINT_FITTED_AND_THEORETICAL_VALUES = True
 
-LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR = 365.25636 #sidereal year, number of days for the Earth to do one rotation around the sun
+LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR = 365.24 #mean days per year in the Gregorian calender
 
 ## FUNCTIONS ##
 
@@ -172,12 +172,13 @@ def main():
         
 
         # 4. fit cos-curve to measured data
-        initial_parameter_guess = [LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR, 0] #from knowledge of physics/the theoretical equation
+        initial_parameter_guess = [LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR, 0.172] #from knowledge of physics/the theoretical equation
         fit_parameters, fit_parameters_covariance = curve_fit(cosinus_fit_function, selected_days_between_unique_dates_and_START_DATE, selected_alpha_naive_min, p0=initial_parameter_guess)
 
         a, b, c, d = fit_parameters[0], fit_parameters[1], fit_parameters[2], fit_parameters[3]
         a, b, c, d = np.array(a), np.array(b), np.array(c), np.array(d) #to make np.cos(*args) stop crying
 
+        DAYS_START_DATE_TO_BEGINNING_OF_2021 = np.abs(get_days_between_date_and_START_DATE("2021-01-01"))
         fitted_curve_values = a + b*np.cos(c*(all_days_between_START_and_END_DATE) + d)
         theoretical_curve_values = LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG + EARTHS_AXIAL_TILT*np.cos(2*np.pi*(all_days_between_START_and_END_DATE + np.array(10))/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR)
         #better_theoretical_correction_curve_values = better_theoretical_correction_curve(all_days_between_START_and_END_DATE)
