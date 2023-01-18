@@ -3,7 +3,7 @@
 ##        File: SVM_analysis.py
 ##      Author: GOTTFRID OLSSON 
 ##     Created: 2022-08-01
-##     Updated: 2022-12-23
+##     Updated: 2023-01-18
 ##       About: Plot measured data and fitted curve.
 ##====================================================##
 
@@ -174,9 +174,19 @@ def main():
         # 4. fit cos-curve to measured data
         initial_parameter_guess = [LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG, EARTHS_AXIAL_TILT, 2*np.pi/LEAP_DAY_CORRECTED_DAYS_IN_A_YEAR, 0.172] #from knowledge of physics/the theoretical equation
         fit_parameters, fit_parameters_covariance = curve_fit(cosinus_fit_function, selected_days_between_unique_dates_and_START_DATE, selected_alpha_naive_min, p0=initial_parameter_guess)
-
+        fit_parameters_one_sigma_error = np.sqrt(np.diag(fit_parameters_covariance))
+        
         a, b, c, d = fit_parameters[0], fit_parameters[1], fit_parameters[2], fit_parameters[3]
         a, b, c, d = np.array(a), np.array(b), np.array(c), np.array(d) #to make np.cos(*args) stop crying
+
+        print( "Parameter in fit     Fitted value     Fitted value error (one standard deviation)")
+        print(f"a                    {a:.4f}            {fit_parameters_one_sigma_error[0]:.6f}")
+        print(f"b                    {b:.4f}            {fit_parameters_one_sigma_error[1]:.6f}")
+        print(f"c                    {c:.4f}             {fit_parameters_one_sigma_error[2]:.6f}")
+        print(f"d                    {d:.4f}             {fit_parameters_one_sigma_error[3]:.6f}")
+
+        print(f"a - a_0 = {a-LATITUDE_DOKTOR_FORSELIUS_BACKE_50_GBG}")
+        print(f"b - b_0 = {b-EARTHS_AXIAL_TILT}")
 
         DAYS_START_DATE_TO_BEGINNING_OF_2021 = np.abs(get_days_between_date_and_START_DATE("2021-01-01"))
         fitted_curve_values = a + b*np.cos(c*(all_days_between_START_and_END_DATE) + d)
