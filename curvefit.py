@@ -11,16 +11,35 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 from scipy.optimize import curve_fit
 from datetime import datetime
 
 
+matplotlib.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif", 
+    "font.serif" : ["Computer Modern Roman"], 
+    "font.size"  : 11,
+    "figure.figsize" : (16/2.54, 9/2.54)
+})
+matplotlib.rc('font',   size=11)      #2022-06-21: not sure what the difference is, to test later on!
+matplotlib.rc('axes',   titlesize=11) #2022-06-21: not sure what the difference is, to test later on!
+matplotlib.rc('axes',   labelsize=11) #2022-06-21: not sure what the difference is, to test later on!
+matplotlib.rc('xtick',  labelsize=9)
+matplotlib.rc('ytick',  labelsize=9)
+matplotlib.rc('legend', fontsize=9)
 
-day = "2022-12-11"
-measured_angle_degree = [80.75, 80.50, 80.50, 80.75, 80.75, 81.25, 82.00]
-time_of_day           = ["11:35", "11:50", "12:05", "12:20", "12:35", "12:50", "13:23"]
+
+day = "2022-06-05"
+measured_angle_degree = [54.25, 37.25, 36.75, 36.25, 36.00, 35.50, 35.25, 35.00, 35.00, 35.00, 35.25, 35.25, 35.50, 35.75, 36.25, 36.75, 37.25, 43.25]
+measured_angle_uncertainty_degree = [0.25 for i in measured_angle_degree]
+time_of_day           = ["09:15", "12:00", "12:10", "12:20", "12:30", "12:40", "12:50", "13:00", "13:10", "13:20", "13:30", "13:40", "13:50", "14:00", "14:10", "14:20", "14:30", "15:28"]
 minutes_from_midnight = []
 
+measured_angle_degree = measured_angle_degree[1:-1]
+measured_angle_uncertainty_degree = [0.25 for i in measured_angle_degree]
+time_of_day           = time_of_day[1:-1]
 
 
 def get_minutes_from_midnight_from_time_of_day(time_of_day_string, time_of_day_dattime_format="%H:%M"):
@@ -59,18 +78,32 @@ for index, minute in enumerate(minutes_from_midnight_linspace):
                 if fitted_curve_values[index] < fitted_curve_values[index-1]:
                         minute_at_minimum_angle_fitted_curve = minutes_from_midnight_linspace[index]
 
-print(minute_at_minimum_angle_fitted_curve, minumum_angle_fitted_curve)
+#print(minute_at_minimum_angle_fitted_curve, minumum_angle_fitted_curve)
 
 ## PLOT ##
 minute_buffer_plot = 30
 angle_buffer_plot = 0.5
-plt.title(f"Measurement on {day}\nFitted curve: {a:.1f}+{b:.1f}cos({c:.2f}x+{d:.2f})")
+#plt.title(f"Measurement on {day}\nFitted curve: {a:.1f}+{b:.1f}cos({c:.2f}x+{d:.2f})")
+fig, ax = plt.subplots(1, 1, figsize=((16/2.54, 9/2.54)))
 
-plt.plot(minutes_from_midnight, measured_angle_degree, 'rx', label='Measured angle')
-plt.plot(minutes_from_midnight_linspace, fitted_curve_values, 'k--', label='Fitted curve')
-plt.plot(minute_at_minimum_angle_fitted_curve, minumum_angle_fitted_curve, 'bo', label=f'Minimum angle from fit: {minumum_angle_fitted_curve:.2f}')
+ax.errorbar(x=minutes_from_midnight, y=measured_angle_degree, yerr=measured_angle_uncertainty_degree, color='r', linestyle='', linewidth=1.62, marker='o', markersize=5, markerfacecolor="None", markeredgewidth=1.62, label='Uppmätt $\\beta$', elinewidth=1.62, capsize=3, barsabove=0)
+ax.plot(minutes_from_midnight_linspace, fitted_curve_values, 'k--', linewidth=1.62, label='Anpassad cosinuskurva')
+#plt.plot(minute_at_minimum_angle_fitted_curve, minumum_angle_fitted_curve, 'bo', label=f': {minumum_angle_fitted_curve:.2f}')
 
-plt.xlim(np.min(minutes_from_midnight)-minute_buffer_plot, np.max(minutes_from_midnight)+minute_buffer_plot)
-plt.ylim(np.min(measured_angle_degree)-angle_buffer_plot,  np.max(measured_angle_degree)+angle_buffer_plot)
-plt.legend()
+#plt.xlim(np.min(minutes_from_midnight)-minute_buffer_plot, np.max(minutes_from_midnight)+minute_buffer_plot)
+plt.xlim(700, 900)
+#plt.ylim(np.min(measured_angle_degree)-angle_buffer_plot,  np.max(measured_angle_degree)+angle_buffer_plot)
+plt.ylim(34.5, 38)
+plt.xlabel(f"Tid på dagen {day} från 00:00 (min)")
+plt.ylabel(f"Vinkel (grader)")
+
+
+yFormatString = '{:.1f}'
+ax.get_yaxis().set_major_formatter( matplotlib.ticker.FuncFormatter(lambda x, pos: yFormatString.format(x).replace('.', ',')) ) 
+
+
+plt.grid()
+plt.legend(loc='upper center')
+plt.tight_layout()
+plt.savefig(f"Beta_funktion_tid_dag_{day}.pdf")
 plt.show()
