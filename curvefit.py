@@ -66,7 +66,7 @@ fit_parameters, fit_parameters_covariance = curve_fit(cosinus_fit_function, minu
 
 a, b, c, d = fit_parameters[0], fit_parameters[1], fit_parameters[2], fit_parameters[3]
 a, b, c, d = np.array(a), np.array(b), np.array(c), np.array(d) #to make np.cos(*args) stop crying
-
+print(a, b, c, d)
 fitted_curve_values = a + b*np.cos(c*(minutes_from_midnight_linspace) + d)
 
 
@@ -86,8 +86,8 @@ angle_buffer_plot = 0.5
 #plt.title(f"Measurement on {day}\nFitted curve: {a:.1f}+{b:.1f}cos({c:.2f}x+{d:.2f})")
 fig, ax = plt.subplots(1, 1, figsize=((16/2.54, 9/2.54)))
 
-ax.errorbar(x=minutes_from_midnight, y=measured_angle_degree, yerr=measured_angle_uncertainty_degree, color='r', linestyle='', linewidth=1.62, marker='o', markersize=5, markerfacecolor="None", markeredgewidth=1.62, label='Uppmätt $\\beta$', elinewidth=1.62, capsize=3, barsabove=0)
-ax.plot(minutes_from_midnight_linspace, fitted_curve_values, 'k--', linewidth=1.62, label='Anpassad cosinuskurva')
+ax.errorbar(x=minutes_from_midnight, y=measured_angle_degree, yerr=measured_angle_uncertainty_degree, color='r', linestyle='', linewidth=1.62, marker='o', markersize=5, markerfacecolor="None", markeredgewidth=1.62, label='Mätvärden', elinewidth=1.62, capsize=3, barsabove=0)
+ax.plot(minutes_from_midnight_linspace, fitted_curve_values, 'k--', linewidth=1.62, label=f"Anpassad cosinuskurva\n${a:.2f}+{b:.2f}cos({c:.2f}x+{d:.2f})$")
 #plt.plot(minute_at_minimum_angle_fitted_curve, minumum_angle_fitted_curve, 'bo', label=f': {minumum_angle_fitted_curve:.2f}')
 
 #plt.xlim(np.min(minutes_from_midnight)-minute_buffer_plot, np.max(minutes_from_midnight)+minute_buffer_plot)
@@ -95,7 +95,7 @@ plt.xlim(700, 900)
 #plt.ylim(np.min(measured_angle_degree)-angle_buffer_plot,  np.max(measured_angle_degree)+angle_buffer_plot)
 plt.ylim(34.5, 38)
 plt.xlabel(f"Tid på dagen {day} från 00:00 (min)")
-plt.ylabel(f"Vinkel (grader)")
+plt.ylabel(f"Vinkel $\\beta$ (grader)")
 
 
 yFormatString = '{:.1f}'
